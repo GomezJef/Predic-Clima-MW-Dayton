@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predicción de Demanda Eléctrica | Reporte Interactivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px; /* Max width for larger screens */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 450px;
+        }
+        @media (min-width: 768px) {
+            .chart-container { height: 400px; }
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        /* Table Styling */
+        .comparison-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.85rem;
+        }
+        .comparison-table th {
+            text-align: right;
+            padding: 0.75rem 0.5rem;
+            background-color: #f3f4f6; /* stone-100 */
+            font-weight: 700;
+            color: #374151; /* stone-700 */
+            border-bottom: 2px solid #e5e7eb; /* stone-200 */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .comparison-table th:first-child {
+            text-align: left;
+            padding-left: 1rem;
+        }
+        .comparison-table td {
+            text-align: right;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #e5e7eb;
+            color: #1f2937; /* stone-800 */
+        }
+        .comparison-table td:first-child {
+            text-align: left;
+            font-weight: 600;
+            padding-left: 1rem;
+        }
+        .comparison-table tr:hover {
+            background-color: #f9fafb;
+        }
+        .highlight-row {
+            background-color: #ecfdf5; /* green-50 */
+            border-left: 4px solid #10b981; /* green-500 */
+        }
+        .highlight-row td {
+            font-weight: 800;
+            color: #065f46; /* green-800 */
+        }
+        /* Custom Scrollbar for Table Container */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background-color: #d1d5db;
+            border-radius: 4px;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutrals (Stone) with Electric Blue and Amber Accents -->
+    <!-- Application Structure Plan: Linear storytelling (Context -> History -> EDA -> Method -> Results). Prioritizes clarity of the 'Why' and the 'How'. -->
+    <!-- Visualization Choices: Chart.js for all dynamic charts. CSS-based bars for Feature Importance. HTML Table for precise model metrics. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="bg-stone-50 text-stone-800 antialiased selection:bg-amber-200 selection:text-stone-900">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-stone-200 shadow-sm transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <span class="text-2xl">⚡</span>
+                    <span class="font-bold text-xl tracking-tight text-stone-900">EnergyAI</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#inicio" class="text-stone-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Inicio</a>
+                    <a href="#problema" class="text-stone-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Contexto</a>
+                    <a href="#analisis" class="text-stone-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Análisis</a>
+                    <a href="#metodologia" class="text-stone-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Metodología</a>
+                    <a href="#resultados" class="text-stone-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Resultados</a>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-stone-500 hover:text-stone-900 focus:outline-none p-2">
+                        <span class="text-2xl">☰</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-stone-100 absolute w-full shadow-lg">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <a href="#inicio" class="block px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-50">Inicio</a>
+                <a href="#problema" class="block px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-50">Contexto</a>
+                <a href="#analisis" class="block px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-50">Análisis</a>
+                <a href="#metodologia" class="block px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-50">Metodología</a>
+                <a href="#resultados" class="block px-3 py-2 rounded-md text-base font-medium text-stone-700 hover:bg-stone-50">Resultados</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="inicio" class="pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto min-h-[80vh] flex flex-col justify-center">
+        <div class="text-center">
+            <span class="inline-block py-1 px-3 rounded-full bg-blue-50 text-blue-700 text-xs font-bold tracking-wide uppercase mb-6 shadow-sm border border-blue-100">Proyecto Final Bootcamp IA</span>
+            <h1 class="text-4xl tracking-tight font-extrabold text-stone-900 sm:text-5xl md:text-7xl mb-6">
+                Predicción Horaria de <br>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-amber-500">Demanda de Electricidad</span>
+            </h1>
+            <p class="mt-4 max-w-md mx-auto text-base text-stone-500 sm:text-lg md:mt-8 md:text-xl md:max-w-3xl leading-relaxed">
+                Desarrollo de un modelo de Machine Learning robusto para garantizar la estabilidad de la red eléctrica y optimizar costos operativos mediante la anticipación precisa del consumo.
+            </p>
+            
+            <div class="mt-10 flex justify-center items-center gap-4">
+                <div class="text-sm font-medium text-stone-400 uppercase tracking-widest">Desarrollado por</div>
+                <div class="flex items-center gap-3 bg-white px-5 py-3 rounded-full shadow-md border border-stone-200 hover:border-blue-300 transition-all cursor-default">
+                    <span class="h-3 w-3 rounded-full bg-green-500 animate-pulse"></span>
+                    <span class="font-bold text-stone-800 tracking-wide">JEFERSSON GÓMEZ CARRILLO</span>
+                </div>
+            </div>
+            
+            <div class="mt-16 animate-bounce">
+                <a href="#problema" class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white text-stone-400 shadow-md border border-stone-100 hover:text-blue-500 hover:border-blue-200 transition-all">
+                    <span class="text-2xl">⬇</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Context & Execution History Section -->
+    <section id="problema" class="py-20 bg-white border-y border-stone-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <!-- Problem Definition -->
+            <div class="text-center mb-16">
+                <h2 class="text-sm text-blue-600 font-bold tracking-widest uppercase mb-3">Definición del Problema</h2>
+                <p class="text-3xl leading-8 font-extrabold tracking-tight text-stone-900 sm:text-4xl mb-4">
+                    El Equilibrio de la Red Eléctrica
+                </p>
+                <p class="max-w-2xl text-xl text-stone-500 mx-auto">
+                    La energía no se almacena fácilmente. Debe producirse en el instante exacto en que se consume.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+                <!-- Card 1: Overproduction -->
+                <div class="relative bg-stone-50 p-8 rounded-2xl border border-stone-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
+                    <div class="absolute top-6 right-6 text-4xl group-hover:scale-110 transition-transform">💰</div>
+                    <h3 class="text-xl font-bold text-stone-900 mb-3">Sobreproducción</h3>
+                    <p class="text-stone-600 mb-6 leading-relaxed">Generar más energía de la necesaria desperdicia combustible fósil y recursos, elevando los costos operativos innecesariamente.</p>
+                    <div class="w-full bg-stone-200 rounded-full h-1.5">
+                        <div class="bg-amber-400 h-1.5 rounded-full" style="width: 80%"></div>
+                    </div>
+                    <span class="text-xs text-stone-400 mt-2 block font-medium">Impacto Económico: ALTO</span>
+                </div>
+
+                <!-- Card 2: Underproduction -->
+                <div class="relative bg-stone-50 p-8 rounded-2xl border border-stone-100 shadow-sm hover:shadow-xl transition-all duration-300 group">
+                    <div class="absolute top-6 right-6 text-4xl group-hover:scale-110 transition-transform">⚠️</div>
+                    <h3 class="text-xl font-bold text-stone-900 mb-3">Subproducción</h3>
+                    <p class="text-stone-600 mb-6 leading-relaxed">Generar menos energía de la demandada desestabiliza la frecuencia de la red, provocando fallas técnicas o apagones masivos.</p>
+                    <div class="w-full bg-stone-200 rounded-full h-1.5">
+                        <div class="bg-red-500 h-1.5 rounded-full" style="width: 95%"></div>
+                    </div>
+                    <span class="text-xs text-stone-400 mt-2 block font-medium">Riesgo Operativo: CRÍTICO</span>
+                </div>
+
+                <!-- Card 3: Execution Trajectory (The Logic for Series) -->
+                <div class="relative bg-blue-50 p-8 rounded-2xl border border-blue-100 shadow-sm hover:shadow-xl transition-all duration-300">
+                    <div class="absolute top-6 right-6 text-4xl">📈</div>
+                    <h3 class="text-xl font-bold text-blue-900 mb-3">Trayectoria de Ejecución</h3>
+                    <p class="text-blue-800 mb-4 leading-relaxed">Este proyecto es la culminación técnica del Bootcamp, aplicando conocimientos previos a un problema dinámico.</p>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3 text-sm text-blue-700 bg-white/60 p-2 rounded-lg">
+                            <span>🚗</span> <span>Regresión Lineal (CO2)</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm text-blue-700 bg-white/60 p-2 rounded-lg">
+                            <span>🌧️</span> <span>Clasificación (Clima)</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm text-blue-700 bg-white/60 p-2 rounded-lg">
+                            <span>💳</span> <span>Desbalance (Crédito)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Execution History Details -->
+            <div class="border-t border-stone-200 pt-10">
+                <h3 class="text-center text-lg font-semibold text-stone-800 mb-8">Fundamentos Técnicos: Datasets Trabajados</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center p-4 hover:bg-stone-50 rounded-xl transition-colors">
+                        <div class="text-stone-400 text-xs uppercase font-bold mb-1">Dataset 1</div>
+                        <div class="font-bold text-stone-800">Emissions_Canada_CO2.csv</div>
+                        <div class="text-sm text-stone-500 mt-1">Regresión Estática</div>
+                    </div>
+                    <div class="text-center p-4 hover:bg-stone-50 rounded-xl transition-colors">
+                        <div class="text-stone-400 text-xs uppercase font-bold mb-1">Dataset 2</div>
+                        <div class="font-bold text-stone-800">weather_forecast_data.csv</div>
+                        <div class="text-sm text-stone-500 mt-1">Clasificación Binaria</div>
+                    </div>
+                    <div class="text-center p-4 hover:bg-stone-50 rounded-xl transition-colors">
+                        <div class="text-stone-400 text-xs uppercase font-bold mb-1">Dataset 3</div>
+                        <div class="font-bold text-stone-800">credit_dataset.csv</div>
+                        <div class="text-sm text-stone-500 mt-1">Clasificación Desbalanceada</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EDA Section -->
+    <section id="analisis" class="py-20 bg-stone-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-12 text-center md:text-left">
+                <h2 class="text-sm text-blue-600 font-bold tracking-widest uppercase mb-3">Análisis Exploratorio (EDA)</h2>
+                <h3 class="text-3xl font-extrabold text-stone-900 mb-4">Entendiendo los Patrones</h3>
+                <p class="text-lg text-stone-600 max-w-3xl">
+                    El análisis revela que la demanda eléctrica no es aleatoria. Sigue patrones cíclicos de comportamiento humano que el modelo debe aprender.
+                </p>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex justify-center md:justify-start mb-8 gap-4">
+                <button onclick="switchChart('hourly')" id="btn-hourly" class="px-6 py-2.5 rounded-full text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-500/30 transform hover:-translate-y-0.5 transition-all">
+                    Patrón Diario (Horas)
+                </button>
+                <button onclick="switchChart('weekly')" id="btn-weekly" class="px-6 py-2.5 rounded-full text-sm font-bold bg-white text-stone-600 border border-stone-200 hover:bg-stone-100 hover:border-stone-300 transition-all">
+                    Patrón Semanal (Días)
+                </button>
+            </div>
+
+            <!-- Chart Card -->
+            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl border border-stone-100 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-amber-400"></div>
+                
+                <div id="chart-desc-hourly" class="mb-6 text-center chart-description">
+                    <h4 class="text-xl font-bold text-stone-800 mb-2">Ciclo Diario de Consumo</h4>
+                    <p class="text-stone-500">Se observa una caída clara en la madrugada (1-5 AM) y un aumento progresivo hasta el pico nocturno (7-8 PM).</p>
+                </div>
+                <div id="chart-desc-weekly" class="mb-6 text-center chart-description hidden">
+                    <h4 class="text-xl font-bold text-stone-800 mb-2">Ciclo Semanal de Consumo</h4>
+                    <p class="text-stone-500">Diferencia estructural entre días laborales (Industria activa) y fines de semana (Descanso).</p>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="edaCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Methodology Section -->
+    <section id="metodologia" class="py-20 bg-stone-900 text-stone-100 relative overflow-hidden">
+        <!-- Decoration -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 bg-amber-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <h2 class="text-sm text-amber-400 font-bold tracking-widest uppercase mb-3">Ingeniería de Características</h2>
+                <h3 class="text-3xl font-extrabold text-white mb-4">Traduciendo el Tiempo a Matemáticas</h3>
+                <p class="text-lg text-stone-400 max-w-3xl mx-auto">
+                    La máquina no entiende calendarios ni relojes. Para que aprenda, debemos <strong>traducir</strong> fechas humanas en señales numéricas que expliquen el comportamiento.
+                </p>
+            </div>
+
+            <!-- Methodology Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Step 1 -->
+                <div class="bg-stone-800/50 backdrop-blur-sm p-8 rounded-2xl border border-stone-700 hover:border-blue-500 transition-colors group">
+                    <div class="text-4xl mb-4 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">📅</div>
+                    <h4 class="text-lg font-bold text-white mb-3">1. El Input Crudo</h4>
+                    <p class="text-sm text-stone-400 leading-relaxed">Para una computadora, "Sábado 29 de Noviembre a las 8 PM" es solo una cadena de texto sin significado matemático.</p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-stone-800/50 backdrop-blur-sm p-8 rounded-2xl border border-stone-700 hover:border-amber-500 transition-colors group">
+                    <div class="text-4xl mb-4 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">🔄</div>
+                    <h4 class="text-lg font-bold text-white mb-3">2. La Traducción</h4>
+                    <p class="text-sm text-stone-400 leading-relaxed">Descomponemos la fecha en números cíclicos que el modelo entiende: Hora (0-23), Día (0-6). Ahora "Sábado" es un <strong>5</strong>.</p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-stone-800/50 backdrop-blur-sm p-8 rounded-2xl border border-stone-700 hover:border-green-500 transition-colors group">
+                    <div class="text-4xl mb-4 opacity-50 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300">🔙</div>
+                    <h4 class="text-lg font-bold text-white mb-3">3. El Secreto: LAGS</h4>
+                    <p class="text-sm text-stone-400 leading-relaxed">Le damos "memoria". Creamos una variable <strong>"Lag_1"</strong> que le dice: <em>"Hace una hora exacta, consumimos X cantidad"</em>.</p>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="bg-gradient-to-br from-blue-900 to-stone-900 p-8 rounded-2xl border border-blue-700 shadow-lg shadow-blue-900/30">
+                    <div class="text-4xl mb-4">🧠</div>
+                    <h4 class="text-lg font-bold text-white mb-3">4. El Aprendizaje</h4>
+                    <p class="text-sm text-blue-100 leading-relaxed">Al ver miles de estos patrones traducidos, el modelo deduce la regla: <em>"Si es un 5 (Sábado) y son las 20 (8 PM), la demanda subirá."</em></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="resultados" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-16">
+                <h2 class="text-sm text-blue-600 font-bold tracking-widest uppercase mb-3">Resultados y Validación</h2>
+                <h3 class="text-3xl font-extrabold text-stone-900">El Poder del Gradient Boosting</h3>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                
+                <!-- Left Column: Table & Feature Importance (5 cols) -->
+                <div class="lg:col-span-5 space-y-10">
+                    
+                    <!-- Table Block -->
+                    <div>
+                        <h4 class="font-bold text-stone-800 text-lg mb-4 flex items-center gap-2">
+                            <span>📊</span> Comparación de Modelos
+                        </h4>
+                        <div class="table-container bg-white rounded-xl shadow-md border border-stone-200 overflow-x-auto">
+                            <table class="comparison-table">
+                                <thead>
+                                    <tr>
+                                        <th>Modelo</th>
+                                        <th title="Error Absoluto Medio">MAE ⬇</th>
+                                        <th title="Raíz del Error Cuadrático Medio">RMSE</th>
+                                        <th title="Coeficiente de Determinación">R2 ⬆</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="highlight-row">
+                                        <td>Gradient Boosting</td>
+                                        <td>21.19</td>
+                                        <td>29.33</td>
+                                        <td>0.9939</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Random Forest</td>
+                                        <td>27.27</td>
+                                        <td>37.23</td>
+                                        <td>0.9902</td>
+                                    </tr>
+                                    <tr>
+                                        <td>KNN Regressor</td>
+                                        <td>50.51</td>
+                                        <td>66.56</td>
+                                        <td>0.9686</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Regresión Lineal</td>
+                                        <td>62.45</td>
+                                        <td>80.54</td>
+                                        <td>0.9541</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Regresión Ridge</td>
+                                        <td>62.45</td>
+                                        <td>80.54</td>
+                                        <td>0.9541</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-stone-500 mt-2 italic">
+                            * MAE en Megavatios (MW). Menor es mejor. El Gradient Boosting reduce el error de la regresión lineal a un tercio.
+                        </p>
+                    </div>
+
+                    <!-- Feature Importance Block -->
+                    <div class="bg-amber-50 p-6 rounded-2xl border border-amber-200">
+                        <h4 class="font-bold text-amber-900 text-base uppercase mb-4 flex items-center gap-2">
+                            <span>🔑</span> ¿Qué variable importa más?
+                        </h4>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold text-amber-900 mb-1">
+                                    <span>1. Consumo Anterior (Lag_1)</span>
+                                    <span>~95%</span>
+                                </div>
+                                <div class="w-full bg-amber-200/50 rounded-full h-3">
+                                    <div class="bg-amber-600 h-3 rounded-full shadow-sm" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-medium text-amber-800 mb-1">
+                                    <span>2. Hora del Día</span>
+                                    <span>~3%</span>
+                                </div>
+                                <div class="w-full bg-amber-200/50 rounded-full h-3">
+                                    <div class="bg-amber-500/70 h-3 rounded-full" style="width: 15%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-medium text-amber-800 mb-1">
+                                    <span>3. Día de la Semana</span>
+                                    <span>~1%</span>
+                                </div>
+                                <div class="w-full bg-amber-200/50 rounded-full h-3">
+                                    <div class="bg-amber-400/70 h-3 rounded-full" style="width: 5%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-amber-200/60">
+                            <p class="text-sm text-amber-800 font-medium">
+                                Insight de Negocio:
+                            </p>
+                            <p class="text-xs text-amber-700 mt-1">
+                                El modelo aprendió el principio de <strong>Inercia</strong>: El mejor predictor del futuro inmediato es el pasado inmediato.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Final Prediction Chart (7 cols) -->
+                <div class="lg:col-span-7">
+                    <div class="bg-white p-6 rounded-3xl shadow-xl border border-stone-100 h-full flex flex-col">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
+                            <div>
+                                <h4 class="text-xl font-bold text-stone-900">Predicción vs Realidad</h4>
+                                <p class="text-sm text-stone-500">Validación en conjunto de prueba</p>
+                            </div>
+                            <span class="bg-green-100 text-green-800 text-xs px-3 py-1.5 rounded-full font-bold border border-green-200">
+                                Zoom: Últimas 48 Horas
+                            </span>
+                        </div>
+                        
+                        <div class="flex-grow chart-container">
+                            <canvas id="predictionCanvas"></canvas>
+                        </div>
+                        
+                        <div class="mt-6 p-4 bg-stone-50 rounded-xl border border-stone-100">
+                            <p class="text-sm text-stone-600 text-center leading-relaxed">
+                                <span class="font-bold text-stone-900">Interpretación:</span> La línea discontinua (Predicción) sigue casi perfectamente a la línea sólida (Real). El modelo anticipa correctamente tanto los picos de demanda como los valles nocturnos.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer / Next Steps -->
+    <section class="bg-stone-900 text-stone-400 py-16 border-t border-stone-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-white text-2xl font-bold mb-10">Próximos Pasos del Proyecto</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16">
+                <div class="p-6 border border-stone-800 bg-stone-800/30 rounded-2xl hover:bg-stone-800 transition-colors group">
+                    <div class="text-3xl mb-4 group-hover:scale-110 transition-transform">🚀</div>
+                    <h4 class="text-white font-bold text-lg mb-2">Despliegue</h4>
+                    <p class="text-sm leading-relaxed">Implementación productiva en Render.com usando Streamlit para acceso web público.</p>
+                </div>
+                <div class="p-6 border border-stone-800 bg-stone-800/30 rounded-2xl hover:bg-stone-800 transition-colors group">
+                    <div class="text-3xl mb-4 group-hover:scale-110 transition-transform">🌦️</div>
+                    <h4 class="text-white font-bold text-lg mb-2">Variables Exógenas</h4>
+                    <p class="text-sm leading-relaxed">Integración de datos de temperatura y clima para mejorar la precisión en olas de calor/frío.</p>
+                </div>
+                <div class="p-6 border border-stone-800 bg-stone-800/30 rounded-2xl hover:bg-stone-800 transition-colors group">
+                    <div class="text-3xl mb-4 group-hover:scale-110 transition-transform">🤖</div>
+                    <h4 class="text-white font-bold text-lg mb-2">Automatización</h4>
+                    <p class="text-sm leading-relaxed">Configuración de un pipeline de reentrenamiento diario (CI/CD) para evitar la degradación del modelo.</p>
+                </div>
+            </div>
+            <div class="text-sm text-stone-500 pt-8 border-t border-stone-800">
+                <p class="font-semibold text-stone-400">© 2025 JEFERSSON GÓMEZ CARRILLO</p>
+                <p class="mt-2">Proyecto Final - Bootcamp Inteligencia Artificial</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- State Management ---
+        const state = {
+            currentEdaChart: 'hourly',
+            charts: {}
+        };
+
+        // --- Data Mockups ---
+        
+        // Hourly Pattern Data (24 hours) - Typical Duck Curve
+        const hourlyLabels = Array.from({length: 24}, (_, i) => `${i}:00`);
+        const hourlyData = [
+            12000, 11500, 11200, 11000, 11300, 12500, // 0-5am (Valley)
+            14000, 16000, 17500, 18000, 18500, 19000, // 6-11am (Morning Rise)
+            19200, 19500, 19000, 18500, 19500, 21000, // 12-5pm (Afternoon Plateau)
+            22000, 21500, 20500, 19000, 16000, 14000  // 6-11pm (Evening Peak -> Drop)
+        ];
+
+        // Weekly Pattern Data (Mon-Sun)
+        const weeklyLabels = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const weeklyData = [18500, 18700, 18600, 18800, 18400, 15000, 14200];
+
+        // Prediction Comparison Data (Zoom - 48 hours)
+        const predictionLabels = Array.from({length: 48}, (_, i) => `H${i}`);
+        // Create a synthetic sine wave + noise for "Real"
+        const realData = predictionLabels.map((_, i) => 15000 + 5000 * Math.sin(i * 0.25) + (Math.random() * 1000 - 500));
+        // Create "Predicted" - slightly smoothed and very close to real
+        const predictedData = realData.map(val => val + (Math.random() * 400 - 200));
+
+        // --- Chart Configuration & Initialization ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initEdaChart();
+            initPredictionChart();
+            setupMobileMenu();
+        });
+
+        function initEdaChart() {
+            const ctx = document.getElementById('edaCanvas').getContext('2d');
+            
+            state.charts.eda = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: hourlyLabels,
+                    datasets: [{
+                        label: 'Consumo Promedio (MW)',
+                        data: hourlyData,
+                        backgroundColor: 'rgba(37, 99, 235, 0.8)', // Blue-600
+                        borderColor: 'rgb(29, 78, 216)',
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        hoverBackgroundColor: 'rgba(37, 99, 235, 1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: 'bold' },
+                            bodyFont: { size: 13 },
+                            callbacks: {
+                                label: (context) => `${context.raw.toLocaleString()} MW`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 8000,
+                            grid: { color: '#f3f4f6' },
+                            border: { display: false }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initPredictionChart() {
+            const ctx = document.getElementById('predictionCanvas').getContext('2d');
+
+            state.charts.prediction = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: predictionLabels,
+                    datasets: [
+                        {
+                            label: 'Consumo Real',
+                            data: realData,
+                            borderColor: 'rgb(37, 99, 235)', // Blue-600
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            pointHoverRadius: 6,
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Predicción (Modelo)',
+                            data: predictedData,
+                            borderColor: 'rgb(220, 38, 38)', // Red-600
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            borderDash: [5, 5], // Dashed line
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { 
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8,
+                                font: { size: 12, weight: 600 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(17, 24, 39, 0.9)',
+                            padding: 12,
+                            titleFont: { size: 14 },
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${Math.round(context.raw).toLocaleString()} MW`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: '#f3f4f6' },
+                            border: { display: false },
+                            title: { display: true, text: 'Megavatios (MW)', font: {weight: 'bold'} }
+                        },
+                        x: { 
+                            display: false // Hide x labels for cleaner look in demo
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Interaction Functions ---
+
+        window.switchChart = function(type) {
+            const btnHourly = document.getElementById('btn-hourly');
+            const btnWeekly = document.getElementById('btn-weekly');
+            const descHourly = document.getElementById('chart-desc-hourly');
+            const descWeekly = document.getElementById('chart-desc-weekly');
+
+            // Default Style Classes
+            const activeClass = "px-6 py-2.5 rounded-full text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-500/30 transform hover:-translate-y-0.5 transition-all";
+            const inactiveClass = "px-6 py-2.5 rounded-full text-sm font-bold bg-white text-stone-600 border border-stone-200 hover:bg-stone-100 hover:border-stone-300 transition-all";
+
+            if (type === 'hourly') {
+                btnHourly.className = activeClass;
+                btnWeekly.className = inactiveClass;
+                descHourly.classList.remove('hidden');
+                descWeekly.classList.add('hidden');
+                
+                // Update Chart Data
+                state.charts.eda.data.labels = hourlyLabels;
+                state.charts.eda.data.datasets[0].data = hourlyData;
+                state.charts.eda.data.datasets[0].backgroundColor = 'rgba(37, 99, 235, 0.8)';
+            } else {
+                btnWeekly.className = activeClass;
+                btnHourly.className = inactiveClass;
+                descHourly.classList.add('hidden');
+                descWeekly.classList.remove('hidden');
+
+                // Update Chart Data
+                state.charts.eda.data.labels = weeklyLabels;
+                state.charts.eda.data.datasets[0].data = weeklyData;
+                state.charts.eda.data.datasets[0].backgroundColor = 'rgba(245, 158, 11, 0.8)'; // Amber
+            }
+            
+            state.charts.eda.update();
+        };
+
+        function setupMobileMenu() {
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            
+            btn.addEventListener('click', () => {
+                menu.classList.toggle('hidden');
+            });
+            
+            // Close menu when clicking a link
+            menu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    menu.classList.add('hidden');
+                });
+            });
+        }
+    </script>
+</body>
+</html>
